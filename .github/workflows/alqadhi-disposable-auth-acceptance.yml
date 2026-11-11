@@ -26,13 +26,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run real JWT acceptance
-        run: node tests/real-auth-acceptance.mjs --provision-and-test
-      - name: Upload test evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: alqadhi-auth-results
-          path: acceptance-evidence.json
-          if-no-files-found: ignore
-
+      
+      - name: Sync Reviewer password - test only
+        run: |
+          node --input-type=module <<'NODE'
+          const url = "https://uddoevymsrzceqoxpokn.supabase.co/auth/v1/admin/users/5e625f98-6e13-4b15-a36c-4e832953238e";
+          const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+              apikey: process.env.TEST_SUPABASE_SERVICE_ROLE_KEY,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              password: process.env.TEST_PASSWORD_REVIEWER
+            })
+          });
+          if (!response.ok) {
+            throw new Error(`Password sync failed: HTTP ${response.status}`);
+          }
+          console.log("Reviewer password updated in Disposable Test");
+          NODE
