@@ -1,1 +1,38 @@
 
+name: AlQadhi disposable real Auth acceptance
+
+on:
+  workflow_dispatch:
+
+jobs:
+  accept:
+    name: Test only - never deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    env:
+      TEST_SUPABASE_PROJECT_ID: uddoevymsrzceqoxpokn
+      TEST_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.ALQADHI_TEST_SERVICE_ROLE_KEY }}
+      TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.ALQADHI_TEST_PUBLISHABLE_KEY }}
+      TEST_PASSWORD_CREATOR: ${{ secrets.ALQADHI_TEST_PASSWORD_CREATOR }}
+      TEST_PASSWORD_REVIEWER: ${{ secrets.ALQADHI_TEST_PASSWORD_REVIEWER }}
+      TEST_PASSWORD_APPROVER: ${{ secrets.ALQADHI_TEST_PASSWORD_APPROVER }}
+      TEST_PASSWORD_READONLY: ${{ secrets.ALQADHI_TEST_PASSWORD_READONLY }}
+      ACCEPTANCE_EVIDENCE_PATH: acceptance-evidence.json
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run real JWT acceptance
+        run: node tests/real-auth-acceptance.mjs --provision-and-test
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alqadhi-auth-results
+          path: acceptance-evidence.json
+          if-no-files-found: ignore
+
